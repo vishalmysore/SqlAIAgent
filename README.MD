@@ -2,7 +2,7 @@
 
 This project demonstrates an AI agent capable of performing various database operations such as creating databases, creating tables, inserting data, and retrieving data, all through simple english statements. The agent interacts with a **Derby** in-memory database but can be extended to support other relational database systems.
 
-The core of this implementation lies in utilizing annotations like **@Agent** and **@Action** from [Tools4AI](https://github.com/tools4ai) framework to define database operations and map those operations to natural English language queries.
+The core of this implementation lies in utilizing annotations like **@Agent** and **@Action** from [Tools4AI](https://github.com/vishalmysore/tools4ai) framework to define database operations and map those operations to natural English language queries.
 
 The solution uses a flexible and generic approach where **English prompts** are mapped to the `TableData` class, which handles the details of tables, columns, and rows for database actions.
 
