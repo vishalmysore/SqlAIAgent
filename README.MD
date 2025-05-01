@@ -1,6 +1,6 @@
-# AI Agent for Database
+# Google A2A protocol : AI Agent for Database
 
-This project demonstrates an AI agent capable of performing various database operations such as creating databases, creating tables, inserting data, and retrieving data, all through simple english statements. The agent interacts with a **Derby** in-memory database but can be extended to support other relational database systems.
+This project demonstrates an AI agent capable of performing various database operations using Google A2A protocol , such as creating databases, creating tables, inserting data, and retrieving data, all through simple english statements. The agent interacts with a **Derby** in-memory database but can be extended to support other relational database systems.
 
 The core of this implementation lies in utilizing annotations like **@Agent** and **@Action** from [Tools4AI](https://github.com/vishalmysore/tools4ai) framework to define database operations and map those operations to natural English language queries.
 
@@ -20,6 +20,7 @@ public class DerbyService {
 
     private static final String JDBC_URL = "jdbc:derby:memory:myDB;create=true";
     private static final String JDBC_DRIVER = "org.apache.derby.jdbc.ClientDriver";
+}
 ```
 
 **Dynamic Action Mapping:** The actions (such as createDatabase(), createTables(), insertDataInTable(), etc.) are dynamically mapped to SQL queries based on English language prompts. For example:

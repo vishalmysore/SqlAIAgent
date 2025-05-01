@@ -1,12 +1,12 @@
 ----------------------------------------------------------------
-Sun Jan 26 17:50:58 EST 2025:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.15.2.0 - (1873585): instance a816c00e-0194-a4cf-9f91-000005afb818 
-on database directory memory:C:\work\AIAgentForSQL\myDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@4d7e1886 
-Loaded from file:/C:/Users/14168/.m2/repository/org/apache/derby/derby/10.15.2.0/derby-10.15.2.0.jar
+Thu May 01 18:32:32 EDT 2025:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.15.2.0 - (1873585): instance a816c00e-0196-8dfa-e78b-0000031169b0 
+on database directory memory:C:\work\SqlAIAgent\myDB with class loader jdk.internal.loader.ClassLoaders$AppClassLoader@4d7e1886 
+Loaded from file:/C:/Users/babav/.m2/repository/org/apache/derby/derby/10.15.2.0/derby-10.15.2.0.jar
 java.vendor=Oracle Corporation
 java.runtime.version=18.0.2.1+1-1
-user.dir=C:\work\AIAgentForSQL
-os.name=Windows 10
+user.dir=C:\work\SqlAIAgent
+os.name=Windows 11
 os.arch=amd64
 os.version=10.0
 derby.system.home=null

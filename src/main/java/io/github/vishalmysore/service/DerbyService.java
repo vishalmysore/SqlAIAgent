@@ -2,10 +2,13 @@ package io.github.vishalmysore.service;
 
 import com.t4a.annotations.Action;
 import com.t4a.annotations.Agent;
+import com.t4a.detect.ActionCallback;
 import io.github.vishalmysore.data.ColumnData;
 import io.github.vishalmysore.data.RowData;
 import io.github.vishalmysore.data.TableData;
 import io.github.vishalmysore.data.User;
+import io.github.vishalmysore.domain.Task;
+import io.github.vishalmysore.domain.TaskState;
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +26,7 @@ public class DerbyService {
     private static final String JDBC_URL = "jdbc:derby:memory:myDB;create=true";
     private static final String JDBC_DRIVER = "org.apache.derby.jdbc.ClientDriver";
 
+    private ActionCallback callback;
     @Action(description = "start database server")
     public String startServer(String serverName) {
         // Start the Derby server
@@ -34,7 +38,8 @@ public class DerbyService {
     }
 
     @Action(description = "Create database")
-    public String createDatabase() {
+    public String createDatabase(String databaseName) {
+        ((Task)callback.getContext()).setDetailedAndMessage(TaskState.COMPLETED, "Creating database: " + databaseName);
         // Create a database
         try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
             if (conn != null) {
