@@ -1,8 +1,9 @@
 package io.github.vishalmysore;
 
-import io.github.vishalmysore.domain.JsonRpcRequest;
-import io.github.vishalmysore.server.A2ATaskController;
-import io.github.vishalmysore.server.JsonRpcController;
+
+import io.github.vishalmysore.a2a.domain.JsonRpcRequest;
+import io.github.vishalmysore.a2a.server.A2ATaskController;
+import io.github.vishalmysore.a2a.server.JsonRpcController;
 import lombok.extern.java.Log;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

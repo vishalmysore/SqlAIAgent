@@ -3,12 +3,13 @@ package io.github.vishalmysore.service;
 import com.t4a.annotations.Action;
 import com.t4a.annotations.Agent;
 import com.t4a.detect.ActionCallback;
+import io.github.vishalmysore.a2a.domain.Task;
+import io.github.vishalmysore.a2a.domain.TaskState;
 import io.github.vishalmysore.data.ColumnData;
 import io.github.vishalmysore.data.RowData;
 import io.github.vishalmysore.data.TableData;
 import io.github.vishalmysore.data.User;
-import io.github.vishalmysore.domain.Task;
-import io.github.vishalmysore.domain.TaskState;
+
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;
 

@@ -1,8 +1,8 @@
 package io.github.vishalmysore.service;
 
-import io.github.vishalmysore.domain.AgentCard;
 
-import io.github.vishalmysore.server.RealTimeAgentCardController;
+import io.github.vishalmysore.a2a.domain.AgentCard;
+import io.github.vishalmysore.a2a.server.RealTimeAgentCardController;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
