@@ -1,6 +1,6 @@
 # Google A2A protocol : AI Agent for Database
 
-This project demonstrates an AI agent capable of performing various database operations using Google A2A protocol , such as creating databases, creating tables, inserting data, and retrieving data, all through simple english statements. The agent interacts with a **Derby** in-memory database but can be extended to support other relational database systems.
+This project demonstrates an AI agent capable of performing various database operations using Google A2A protocol  as well as MCP protocol, such as creating databases, creating tables, inserting data, and retrieving data, all through simple english statements. The agent interacts with a **Derby** in-memory database but can be extended to support other relational database systems.
 
 The core of this implementation lies in utilizing annotations like **@Agent** and **@Action** from [Tools4AI](https://github.com/vishalmysore/tools4ai) framework to define database operations and map those operations to natural English language queries.
 
