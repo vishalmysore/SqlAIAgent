@@ -6,6 +6,7 @@ import io.github.vishalmysore.mcp.server.MCPToolsController;
 import lombok.extern.java.Log;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 
 import java.util.*;
@@ -14,7 +15,31 @@ import java.util.*;
 @RequestMapping("/mcp")
 public class MCPController extends MCPToolsController {
 
+    SseEmitter lastEmitter;
+   // @GetMapping("/sse")
+    public SseEmitter streamEvents() {
+        SseEmitter emitter = new SseEmitter(0L); // no timeout
+        log.info("Client connected to /sse");
 
+        // Store the emitter if needed to push events later (optional)
+        this.lastEmitter = emitter;
+
+        // Send initialization message (e.g., list of tools)
+        try {
+            Map<String, Object> initMsg = new HashMap<>();
+            initMsg.put("type", "tool_list");
+            initMsg.put("tools", super.getToolsResult().getTools());
+
+            emitter.send(SseEmitter.event()
+                    .name("message")
+                    .data(initMsg));
+        } catch (Exception e) {
+            log.warning("Error sending SSE event: " + e.getMessage());
+            emitter.completeWithError(e);
+        }
+
+        return emitter;
+    }
 
     @GetMapping("/list-tools")
     public ResponseEntity<Map<String, List<Tool>>> listTools() {
@@ -25,8 +50,27 @@ public class MCPController extends MCPToolsController {
 
     @PostMapping("/call-tool")
     public ResponseEntity<CallToolResult> callTool(@RequestBody ToolCallRequest request) {
-          return super.callTool(request);
+          log.info("Received request: " + request);
+            CallToolResult b = new CallToolResult();
+        TextContent c = new TextContent();
+        c.setText("Hello World");
+        c.setType("text");
+
+        List<Content> contentList = new ArrayList<>();
+        contentList.add(c);
+        b.setContent(contentList);
+
+           //ResponseEntity<CallToolResult> result = super.callTool(request,new CustomTaskCallback());
+             // log.info("Received result: " + result.getBody());
+        return ResponseEntity.ok(b);
        }
 
+    @PostMapping("/cancel-notification")
+    public ResponseEntity<CallToolResult> cancelNotification(@RequestBody CancelledNotification request) {
+        log.info("Received cancel notification for: " + request);
 
+
+
+        return ResponseEntity.ok(null);
+    }
 }

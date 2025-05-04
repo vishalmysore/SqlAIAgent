@@ -33,6 +33,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 // Handler: Call a tool by proxying to Spring Boot
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // 🔍 Log the outgoing request
+  console.log("➡️ Sending request to Spring Boot:");
+  console.log(JSON.stringify({
+    name: request.params.name,
+    arguments: request.params.arguments ?? {},
+  }, null, 2));
+
   const response = await fetch("http://localhost:7860/mcp/call-tool", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,13 +49,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }),
   });
 
+  // ❌ Log failure if not OK
   if (!response.ok) {
+    const errorText = await response.text();  // Read error body
+    console.error(`❌ Tool call failed: ${response.statusText}`);
+    console.error("🔻 Error response body:", errorText);
     throw new Error(`Tool call failed: ${response.statusText}`);
   }
 
+  // ✅ Log the response data
   const data = await response.json();
+  console.log("✅ Received response from Spring Boot:");
+  console.log(JSON.stringify(data, null, 2));
+
   return data; // Must match CallToolResponseSchema
 });
+
 
 // Launch server over stdio
 async function runServer() {
