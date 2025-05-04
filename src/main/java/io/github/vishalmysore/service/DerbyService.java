@@ -29,6 +29,9 @@ public class DerbyService {
     private static final String JDBC_URL = "jdbc:derby:memory:myDB;create=true";
     private static final String JDBC_DRIVER = "org.apache.derby.jdbc.ClientDriver";
 
+    /**
+     * This gets automatically injected by the framework you dont need to pass anything
+     */
     private ActionCallback callback;
     @Action(description = "start database server")
     public String startServer(String serverName) {
@@ -40,6 +43,12 @@ public class DerbyService {
 
     }
 
+    /**
+     * Callbacks are avaiable here , in case of MCP you have MCP call back or else a2a callback
+     * Type of callback can be sseemiter, notification , status etc
+     * @param databaseName
+     * @return
+     */
     @Action(description = "Create database")
     public String createDatabase(String databaseName) {
         if(callback.getType().equals(CallBackType.A2A.name())) {
