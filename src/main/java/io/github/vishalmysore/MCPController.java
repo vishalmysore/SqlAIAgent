@@ -63,20 +63,33 @@ public class MCPController extends MCPToolsController {
     }
 
     @PostMapping("/call-tool")
-    public ResponseEntity<CallToolResult> callTool(@RequestBody ToolCallRequest request) {
-          log.info("Received request: " + request);
-            CallToolResult b = new CallToolResult();
-        TextContent c = new TextContent();
-        c.setText("Hello World");
-        c.setType("text");
+    public ResponseEntity<JSONRPCResponse> callTool(@RequestBody ToolCallRequest request) {
+//        log.info("Received request: " + request);
+//
+//        // Construct the actual business response
+//        CallToolResult result = new CallToolResult();
+//        TextContent content = new TextContent();
+//        content.setText("created");
+//        content.setType("text");
+//
+//        List<Content> contentList = new ArrayList<>();
+//        contentList.add(content);
+//        result.setContent(contentList);
+//
+//        // Wrap in JSON-RPC envelope
+//        JSONRPCResponse response = new JSONRPCResponse();
+//        response.setId("133");
+//        //response.setId(request.get);
+//        response.setResult(result);
+//
+//        return ResponseEntity.ok(response);
 
-        List<Content> contentList = new ArrayList<>();
-        contentList.add(c);
-        b.setContent(contentList);
-
-           //ResponseEntity<CallToolResult> result = super.callTool(request,new CustomTaskCallback());
-             // log.info("Received result: " + result.getBody());
-        return ResponseEntity.ok(b);
+          ResponseEntity<CallToolResult> result = super.callTool(request,new CustomTaskCallback());
+              log.info("Received result: " + result.getBody());
+        JSONRPCResponse response = new JSONRPCResponse();
+        response.setId("133");
+        response.setResult(result.getBody());
+        return ResponseEntity.ok(response);
        }
 
     @PostMapping("/cancel-notification")
