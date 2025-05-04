@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/.well-known/")
 public class A2ADatabaseCardController extends RealTimeAgentCardController {
+
+
     @GetMapping(value = "/agent.json", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AgentCard> getAgentCardForDatabase() {
         AgentCard card = getCachedAgentCard();

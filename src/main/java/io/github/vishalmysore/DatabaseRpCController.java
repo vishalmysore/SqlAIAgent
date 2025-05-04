@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @Log
 public class DatabaseRpCController extends JsonRpcController {
+
+
     @PostMapping
     public Object handleRpc(@RequestBody JsonRpcRequest request) {
         log.info(request.toString());
