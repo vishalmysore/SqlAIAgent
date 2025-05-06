@@ -5,7 +5,7 @@ import com.t4a.annotations.Agent;
 import com.t4a.detect.ActionCallback;
 import io.github.vishalmysore.a2a.domain.Task;
 import io.github.vishalmysore.a2a.domain.TaskState;
-import io.github.vishalmysore.common.CallBackType;
+
 import io.github.vishalmysore.data.ColumnData;
 import io.github.vishalmysore.data.RowData;
 import io.github.vishalmysore.data.TableData;
@@ -51,13 +51,7 @@ public class DerbyService {
      */
     @Action(description = "Create database")
     public String createDatabase(String databaseName) {
-        if(callback.getType().equals(CallBackType.A2A.name())) {
-            ((Task) callback.getContext()).setDetailedAndMessage(TaskState.COMPLETED, "Creating database: " + databaseName);
-        }
-        if(callback.getType().equals(CallBackType.MCP.name())) {
-            //You can set to custom type of values if needed
-            ((CallToolResult) callback.getContext()).getContent().get(0);
-        }
+
         // Create a database
         try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
             if (conn != null) {

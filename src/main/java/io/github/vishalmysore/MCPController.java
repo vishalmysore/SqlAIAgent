@@ -3,7 +3,7 @@ package io.github.vishalmysore;
 
 import com.t4a.processor.AIProcessor;
 import com.t4a.processor.OpenAiActionProcessor;
-import io.github.vishalmysore.common.MCPResultsCallBack;
+
 import io.github.vishalmysore.mcp.domain.*;
 import io.github.vishalmysore.mcp.server.MCPToolsController;
 import lombok.extern.java.Log;
@@ -85,7 +85,7 @@ public class MCPController extends MCPToolsController {
 //
 //        return ResponseEntity.ok(response);
 
-         CallToolResult result = super.callTool(request,new MCPResultsCallBack());
+         CallToolResult result = super.callTool(request, new CustomTaskCallback()).getBody();
               log.info("Received result: " + result);
         JSONRPCResponse response = new JSONRPCResponse();
         response.setId("133");
