@@ -7,17 +7,9 @@ The core of this implementation lies in utilizing annotations like **@Agent** an
 
 The solution uses a flexible and generic approach where **English prompts** are mapped to the `TableData` class, which handles the details of tables, columns, and rows for database actions.
 
+You can connect this agent to MCP with MCP connector [here](https://github.com/vishalmysore/mcp-connector/)  
 
-To run this as MCP Server you need to include testserver.js as part of our Claude Desktop COnfig
 
-``` 
-"databaseagent": {
-      "command": "node",
-      "args": [
-        "/work/SqlAIAgent/src/test/resources/dist/testserver.js"
-      ]
-    } 
-```  
 or use MCP Inspector 
 
 ```  
