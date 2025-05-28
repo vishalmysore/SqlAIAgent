@@ -38,3 +38,8 @@ build/
 ### Mac OS ###
 .DS_Store
 /src/test/resources/node_modules/
+/derby.log
+/article.md
+/src/test/resources/proxy_server.log
+/src/main/resources/static/DerbyServiceDocumentation.html
+/src/test/resources/package-lock.json
