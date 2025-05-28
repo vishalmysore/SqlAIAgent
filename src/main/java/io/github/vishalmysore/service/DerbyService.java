@@ -1,5 +1,6 @@
 package io.github.vishalmysore.service;
 
+import com.opencsv.CSVWriter;
 import com.t4a.annotations.Action;
 import com.t4a.annotations.Agent;
 import com.t4a.detect.ActionCallback;
@@ -11,15 +12,22 @@ import io.github.vishalmysore.data.RowData;
 import io.github.vishalmysore.data.TableData;
 import io.github.vishalmysore.data.User;
 
+import io.github.vishalmysore.mcp.domain.BlobResourceContents;
 import io.github.vishalmysore.mcp.domain.CallToolResult;
+import io.github.vishalmysore.mcp.domain.EmbeddedResource;
+import io.github.vishalmysore.mcp.domain.TextResourceContents;
 import lombok.extern.java.Log;
+
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Log
 @Service
@@ -33,6 +41,8 @@ public class DerbyService {
      * This gets automatically injected by the framework you dont need to pass anything
      */
     private ActionCallback callback;
+
+    @PreAuthorize("hasRole('USER')")
     @Action(description = "start database server")
     public String startServer(String serverName) {
         // Start the Derby server
@@ -49,6 +59,7 @@ public class DerbyService {
      * @param databaseName
      * @return
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @Action(description = "Create database")
     public String createDatabase(String databaseName) {
 
@@ -64,7 +75,7 @@ public class DerbyService {
         }
         return "Failed to create database.";
     }
-
+    @PreAuthorize("hasRole('USER')")
     @Action(description = "Create tables")
     public String createTables(TableData tableData) {
         //this is just for demo purpose only to show the workings of AI Agents and not a production ready code
@@ -171,5 +182,113 @@ public class DerbyService {
         }
     }
 
+    @Action(description = "Retrieve data and return as embedded file resource")
+    public EmbeddedResource retrieveDataAsFile(String sqlSelectQuery, String fileName) {
+        EmbeddedResource embedded = new EmbeddedResource();
+        BlobResourceContents blobContents = new BlobResourceContents();
 
+        File tempFile = null;
+        try {
+            tempFile = File.createTempFile(fileName, ".csv");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try (Connection conn = DriverManager.getConnection(JDBC_URL);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlSelectQuery);
+             FileWriter writer = new FileWriter(tempFile);
+             CSVWriter csvWriter = new CSVWriter(writer)) {
+
+            // Write headers
+            ResultSetMetaData metaData = rs.getMetaData();
+            String[] headers = new String[metaData.getColumnCount()];
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                headers[i-1] = metaData.getColumnName(i);
+            }
+            csvWriter.writeNext(headers);
+
+            // Write data rows
+            while (rs.next()) {
+                String[] row = new String[metaData.getColumnCount()];
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                    row[i-1] = rs.getString(i);
+                }
+                csvWriter.writeNext(row);
+            }
+
+            // Convert file to Base64
+            byte[] fileContent = Files.readAllBytes(tempFile.toPath());
+            String base64Content = Base64.getEncoder().encodeToString(fileContent);
+
+            // Set blob contents
+            blobContents.setMimeType("text/csv");
+            blobContents.setBlob(base64Content);
+           // blobContents.setName(fileName + ".csv");
+
+            // Set embedded resource
+            embedded.setResource(blobContents);
+
+            // Cleanup temp file
+            tempFile.delete();
+            return embedded;
+
+        } catch (Exception e) {
+            log.warning("Error creating embedded resource: " + e.getMessage());
+            throw new RuntimeException("Failed to create embedded resource", e);
+        }
+    }
+
+    @Action(description = "Return grocery data as embedded file resource")
+    public EmbeddedResource getGroceryItemsInFile(String fileName) {
+        EmbeddedResource embedded = new EmbeddedResource();
+        TextResourceContents blobContents = new TextResourceContents();
+
+        // Create mock CSV data
+        String mockData = "id,name,value\n" +
+                "1,item1,100\n" +
+                "2,item2,200\n" +
+                "3,item3,300\n";
+
+        // Convert string to Base64
+        //String base64Content = Base64.getEncoder().encodeToString(mockData.getBytes());
+
+        // Set blob contents
+        blobContents.setMimeType("text/csv");
+        blobContents.setText(mockData);
+
+        // Set embedded resource
+        embedded.setResource(blobContents);
+
+        return embedded;
+    }
+
+    @Action(description = "Return grocery data as embedded PDF file resource")
+    public EmbeddedResource getGroceryItemsAsPDF(String fileName) {
+        EmbeddedResource embedded = new EmbeddedResource();
+        BlobResourceContents blobContents = new BlobResourceContents();
+
+        // This is a minimal valid PDF content in base64
+        String pdfBase64 = "JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog" +
+                "IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv" +
+                "TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K" +
+                "Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg" +
+                "L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+" +
+                "PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u" +
+                "dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq" +
+                "Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU" +
+                "CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIFdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu" +
+                "ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g" +
+                "CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw" +
+                "MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v" +
+                "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G";
+
+        // Set blob contents
+        blobContents.setMimeType("application/pdf");
+        blobContents.setBlob(pdfBase64);
+        blobContents.setUri("data:application/pdf;base64," + pdfBase64);
+        // Set embedded resource
+        embedded.setResource(blobContents);
+
+        return embedded;
+    }
 }

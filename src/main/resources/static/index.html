@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL A2A/MCP Agent Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --bg-color: #f8fafc;
+        }
+        body {
+            background-color: var(--bg-color);
+            line-height: 1.6;
+        }
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 4rem 0;
+            margin-bottom: 3rem;
+        }
+        .code-block {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        .feature-list li {
+            margin-bottom: 0.75rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        .feature-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--primary-color);
+        }
+        .alert {
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <span class="navbar-brand">Cross-Protocol SQL Agent</span>
+            <div class="ms-auto">
+                <a href="https://github.com/vishalmysore/a2ajava" class="btn btn-outline-primary">Join the Community</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero text-center">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">Cross-Protocol SQL Agent</h1>
+            <p class="lead mb-3">An open-source initiative to bridge A2A and MCP protocols in Java</p>
+            <p class="text-light">Built with ❤️ by the community, for the community</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>Project Vision</h2>
+            <p>This project represents my initiative to create a bridge between different AI agent protocols. Built as an open-source effort, it demonstrates how to create a database agent that works seamlessly with both A2A (Agent-to-Agent) and MCP (Model Context Protocol) specifications.</p>
+            
+            <div class="alert alert-info mt-4">
+                <h5 class="alert-heading">Community Contribution</h5>
+                <p>This is an open-source project aimed at fostering collaboration in the AI agent ecosystem. Your feedback and contributions are welcome!</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Security Implementation</h2>
+            <p>The agent implements robust security using Spring Security with method-level permissions. Different operations require different access levels:</p>
+            
+            <div class="code-block">
+                <pre><code class="language-java"># User-level operations
+@PreAuthorize("hasRole('USER')")
+@Action(description = "Create tables")
+public String createTables(TableData tableData) { ... }
+
+# Admin-level operations
+@PreAuthorize("hasRole('ADMIN')")
+@Action(description = "Create database")
+public String createDatabase(String name) { ... }
+
+# Public operations
+@PreAuthorize("permitAll()")
+@Action(description = "View database info")
+public String getDatabaseInfo() { ... }</code></pre>
+            </div>
+
+            <div class="alert alert-warning">
+                <h5 class="alert-heading">Security Features</h5>
+                <ul class="mb-0">
+                    <li>Method-level authorization using @PreAuthorize</li>
+                    <li>Role-based access control (USER, ADMIN roles)</li>
+                    <li>Actions annotated with @Action for protocol compatibility</li>
+                    <li>Integration with both A2A and MCP authentication flows</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>About a2ajava</h2>
+            <p>The project is built on <a href="https://github.com/vishalmysore/a2ajava" target="_blank" class="fw-bold text-decoration-none">a2ajava</a>, an open-source framework I developed to simplify agent development. It's designed to be:</p>
+            <ul class="feature-list">
+                <li>Protocol-agnostic: Seamlessly works with both A2A and MCP protocols</li>
+                <li>Language-flexible: Write agents in Java, Kotlin, or Groovy</li>
+                <li>Platform-independent: Compatible with Gemini, OpenAI, Claude, and Grok</li>
+                <li>Integration-ready: Built-in support for Selenium and human-in-loop workflows</li>
+                <li>Community-driven: Open for contributions and improvements</li>
+            </ul>
+
+            <div class="alert alert-success mt-4">
+                <h5 class="alert-heading">Join the Development</h5>
+                <p class="mb-0">Love working with AI agents? Check out the <a href="https://github.com/vishalmysore/a2ajava" class="alert-link">GitHub repository</a> to contribute or provide feedback!</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>API Examples</h2>
+            
+            <div class="alert alert-warning mb-4">
+                <strong>Note:</strong> Replace <code>localhost</code> with <code>https://vishalmysore-a2amcpdatabase.hf.space/</code> for the hosted version.
+            </div>
+
+            <h4 class="mb-3">A2A Authentication Examples</h4>
+            <div class="code-block">
+                <pre><code class="language-bash"># Basic user authentication
+curl -u user:password http://localhost:7860/.well-known/agent.json
+
+# No authentication
+curl http://localhost:7860/.well-known/agent.json
+
+# Admin authentication
+curl -u admin:admin http://localhost:7860/.well-known/agent.json</code></pre>
+            </div>
+
+            <h4 class="mb-3 mt-4">A2A Task Execution</h4>
+            <div class="code-block">
+                <pre><code class="language-bash">curl -v -u user:password \
+-H "Content-Type: application/json" \
+-d '{
+    "jsonrpc": "2.0",
+    "method": "tasks/send",
+    "params": {
+        "id": "0e2fc442-180f-4cd2-b316-08b384bb236f",
+        "sessionId": "fbe485db-c295-40d0-bb9c-bb16367df091",
+        "message": {
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "can you start the database server cookgpt",
+                    "metadata": null
+                }
+            ]
+        }
+    }
+}' \
+http://localhost:7860/</code></pre>
+            </div>
+
+            <h4 class="mb-3 mt-4">MCP Tools Management</h4>
+            <div class="code-block">
+                <pre><code class="language-bash"># List available tools
+curl -H "Content-Type: application/json" \
+    -d '{"jsonrpc":"2.0","method":"tools/list","params":{},"id":9}' \
+    http://localhost:7860/
+
+# Create database (admin only)
+curl -u admin:admin \
+    -H "Content-Type: application/json" \
+    -d '{
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+            "name": "createDatabase",
+            "arguments": {
+                "provideAllValuesInPlainEnglish": {
+                    "name": "cookgpt"
+                }
+            }
+        },
+        "id": 25
+    }' \
+    http://localhost:7860/</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <p class="mb-0">Vishal Mysore</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <a href="https://github.com/vishalmysore/a2ajava" class="text-light text-decoration-none">Join me on GitHub</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+</body>
+</html>

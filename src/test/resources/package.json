@@ -13,12 +13,6 @@
   "files": [
     "dist"
   ],
-  "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
-    "prepare": "npm run build",
-    "watch": "tsc --watch",
-    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
-  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.3",
     "puppeteer-core": "^23.9.0"
