@@ -101,9 +101,49 @@ public class DerbyService implements A2UIAware, ProcessorAware {
         }
         return result;
     }
+    private Map<String, Object> createDataEntryUI(String tableName) {
+        String surfaceId = "data_entry";
+        String rootId = "root";
 
+        List<String> childIds = Arrays.asList("title", "message", "form");
+        List<Map<String, Object>> components = new ArrayList<>();
+
+        components.add(createRootColumn(rootId, childIds));
+        components.add(createTextComponent("title", "📝 Enter Data for " + tableName, "h2"));
+        components.add(createTextComponent("message", "Please provide the data you want to insert into the table.", "body"));
+
+        // Create a simple form with a text field for data entry
+        Map<String, Object> form = new HashMap<>();
+        form.put("id", "form");
+        form.put("component", "Column");
+        form.put("children", Arrays.asList("data_input"));
+
+        Map<String, Object> dataInput = new HashMap<>();
+        dataInput.put("id", "data_input");
+        dataInput.put("component", "TextField");
+        dataInput.put("label", "Data (JSON format)");
+        dataInput.put("text", "");
+
+        components.add(form);
+        components.add(dataInput);
+
+        return buildA2UIMessage(surfaceId, rootId, components);
+    }
     @Action(description = "Insert new data in database table")
     public Object insertDataInTable(TableData tableData) {
+        if (tableData == null || tableData.getRowDataList() == null ||
+                tableData.getRowDataList().isEmpty() ||
+                tableData.getRowDataList().get(0).getColumnDataList() == null) {
+
+            String result = "No data provided. Please enter the data to insert.";
+
+            if (isUICallback(getCallback())) {
+                // Return a UI form for data entry
+                return createDataEntryUI(tableData != null ? tableData.getTableName() : "table");
+            }
+            return result;
+        }
+
         StringBuilder insertSQL = new StringBuilder("INSERT INTO ");
         insertSQL.append(tableData.getTableName()).append(" (");
 
