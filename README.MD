@@ -33,6 +33,29 @@ public class DerbyService {
 }
 ```
 
+```bash
+ curl -v -u user:password -H "Content-Type: application/json" -d '{
+    "jsonrpc": "2.0",
+    "method": "tasks/send",
+    "params": {
+        "id": "0e2fc442-180f-4cd2-b316-08b384bb236f",
+        "sessionId": "fbe485db-c295-40d0-bb9c-bb16367df091",
+        "message": {
+            "role": "user",
+            "parts": [
+                {
+                    "type": "text",
+                    "text": "can you start the database server cookgpt",
+                    "metadata": null
+                }
+            ]
+        }
+    }
+}' http://localhost:7860/
+
+
+```
+
 **Dynamic Action Mapping:** The actions (such as createDatabase(), createTables(), insertDataInTable(), etc.) are dynamically mapped to SQL queries based on English language prompts. For example:
 
 **Action**: @Action(description = "Create tables")  
