@@ -13,6 +13,8 @@ import io.github.vishalmysore.data.TableData;
 import io.github.vishalmysore.mcp.domain.BlobResourceContents;
 import io.github.vishalmysore.mcp.domain.EmbeddedResource;
 import lombok.extern.java.Log;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -34,6 +36,7 @@ public class DerbyService implements A2UIAware, ProcessorAware {
      ================================================= */
 
     @Action(description = "Create database" ,prompt = "dont populate database name if not found do not assume the name only put if you really find it, do not put any comments in json")
+    @PreAuthorize("hasRole('ADMIN')") 
     public Object createDatabase(String databaseName) {
 
         if (databaseName == null || databaseName.trim().isEmpty()) {
@@ -63,6 +66,7 @@ public class DerbyService implements A2UIAware, ProcessorAware {
      ================================================= */
 
     @Action(description = "Create table")
+    @PreAuthorize("hasRole('ADMIN')") 
     public Object createTables(TableData tableData) {
 
         if (tableData == null ||
@@ -112,6 +116,7 @@ public class DerbyService implements A2UIAware, ProcessorAware {
      ================================================= */
 
     @Action(description = "Insert data into table")
+    @PreAuthorize("hasRole('USER')") 
     public Object insertDataInTable(TableData tableData) {
 
         if (tableData == null ||
