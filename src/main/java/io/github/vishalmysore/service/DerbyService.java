@@ -3,365 +3,360 @@ package io.github.vishalmysore.service;
 import com.opencsv.CSVWriter;
 import com.t4a.annotations.Action;
 import com.t4a.annotations.Agent;
+import com.t4a.annotations.Prompt;
 import com.t4a.processor.ProcessorAware;
+
 import io.github.vishalmysore.a2ui.A2UIAware;
 import io.github.vishalmysore.data.ColumnData;
 import io.github.vishalmysore.data.RowData;
 import io.github.vishalmysore.data.TableData;
-
 import io.github.vishalmysore.mcp.domain.BlobResourceContents;
 import io.github.vishalmysore.mcp.domain.EmbeddedResource;
-import io.github.vishalmysore.mcp.domain.TextResourceContents;
 import lombok.extern.java.Log;
-
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.*;
 import java.util.*;
 
-
-
 @Log
-        
 @Service
-@Agent(groupName = "Database related actions")
+@Agent(groupName = "Database related actions",prompt = "You are a database management agent that can create databases, create tables, insert data into tables, and retrieve data using SQL queries. Use the provided actions to perform database operations as requested by the user.")
 public class DerbyService implements A2UIAware, ProcessorAware {
 
-    private static final String JDBC_URL = "jdbc:derby:memory:myDB;create=true";
-    private static final String JDBC_DRIVER = "org.apache.derby.jdbc.ClientDriver";
+    private static final String JDBC_URL =
+            "jdbc:derby:memory:myDB;create=true";
 
-    @PreAuthorize("hasRole('USER')")
-    @Action(description = "start database server")
-    public Object startServer(String serverName) {
-        // Start the Derby server
-        log.info("Derby server started.");
-        String result = "Derby server started for " + serverName;
-        if (isUICallback(getCallback())) {
-            return createGenericUI("Server Status", result);
-        }
-        return result;
-    }
+    /* =================================================
+       CREATE DATABASE
+     ================================================= */
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @Action(description = "Create database")
+    @Action(description = "Create database" ,prompt = "dont populate database name if not found do not assume the name only put if you really find it, do not put any comments in json")
     public Object createDatabase(String databaseName) {
-        // Create a database
-        String result;
-        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
-            if (conn != null) {
-                result = "Database " + databaseName + " created successfully.";
-            } else {
-                result = "Failed to create database " + databaseName + ".";
+
+        if (databaseName == null || databaseName.trim().isEmpty()) {
+            if (isUICallback(getCallback())) {
+                return createSingleInputForm(
+                        "create_database",
+                        "Create Database",
+                        "Database Name",
+                        "databaseName"
+                );
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            result = "Error creating database: " + e.getMessage();
+            return "Database name is required.";
         }
 
-        if (isUICallback(getCallback())) {
-            return createGenericUI("Database Creation", result);
+        try (Connection conn = DriverManager.getConnection(JDBC_URL)) {
+            return uiOrText(
+                    "Database Created",
+                    "Database '" + databaseName + "' created successfully."
+            );
+        } catch (SQLException e) {
+            return uiOrText("Database Error", e.getMessage());
         }
-        return result;
     }
 
-    @PreAuthorize("hasRole('USER')")
-    @Action(description = "Create tables")
-    public Object createTables(TableData tableData) {
-        StringBuilder createTableSQL = new StringBuilder("CREATE TABLE ");
-        createTableSQL.append(tableData.getTableName()).append(" (");
+    /* =================================================
+       CREATE TABLE
+     ================================================= */
 
-        for (ColumnData column : tableData.getHeaderList()) {
-            createTableSQL.append(column.getColumnName())
+    @Action(description = "Create table")
+    public Object createTables(TableData tableData) {
+
+        if (tableData == null ||
+                tableData.getTableName() == null ||
+                tableData.getTableName().trim().isEmpty() ||
+                tableData.getHeaderList() == null ||
+                tableData.getHeaderList().isEmpty()) {
+
+            if (isUICallback(getCallback())) {
+                return createMessageUI(
+                        "Create Table",
+                        "Please provide tableName and column definitions."
+                );
+            }
+            return "Table name and columns are required.";
+        }
+
+        StringBuilder sql = new StringBuilder("CREATE TABLE ");
+        sql.append(tableData.getTableName()).append(" (");
+
+        for (ColumnData c : tableData.getHeaderList()) {
+            sql.append(c.getColumnName())
                     .append(" ")
-                    .append(column.getSqlColumnType())
+                    .append(c.getSqlColumnType())
                     .append(", ");
         }
 
-        createTableSQL.setLength(createTableSQL.length() - 2);
-        createTableSQL.append(")");
-        log.info("Create table SQL: " + createTableSQL);
+        sql.setLength(sql.length() - 2);
+        sql.append(")");
 
-        String result;
         try (Connection conn = DriverManager.getConnection(JDBC_URL);
-                Statement stmt = conn.createStatement()) {
-            stmt.execute(createTableSQL.toString());
-            result = tableData.getTableName() + " table created successfully.";
+             Statement stmt = conn.createStatement()) {
+
+            stmt.execute(sql.toString());
+            return uiOrText(
+                    "Table Created",
+                    "Table '" + tableData.getTableName() + "' created successfully."
+            );
+
         } catch (SQLException e) {
-            e.printStackTrace();
-            result = "Error creating table: " + e.getMessage();
+            return uiOrText("Table Error", e.getMessage());
         }
-
-        if (isUICallback(getCallback())) {
-            return createGenericUI("Table Creation", result);
-        }
-        return result;
     }
-    private Map<String, Object> createDataEntryUI(String tableName) {
-        String surfaceId = "data_entry";
-        String rootId = "root";
 
-        List<String> childIds = Arrays.asList("title", "message", "form");
-        List<Map<String, Object>> components = new ArrayList<>();
+    /* =================================================
+       INSERT DATA
+     ================================================= */
 
-        components.add(createRootColumn(rootId, childIds));
-        components.add(createTextComponent("title", "📝 Enter Data for " + tableName, "h2"));
-        components.add(createTextComponent("message", "Please provide the data you want to insert into the table.", "body"));
-
-        // Create a simple form with a text field for data entry
-        Map<String, Object> form = new HashMap<>();
-        form.put("id", "form");
-        form.put("component", "Column");
-        form.put("children", Arrays.asList("data_input"));
-
-        Map<String, Object> dataInput = new HashMap<>();
-        dataInput.put("id", "data_input");
-        dataInput.put("component", "TextField");
-        dataInput.put("label", "Data (JSON format)");
-        dataInput.put("text", "");
-
-        components.add(form);
-        components.add(dataInput);
-
-        return buildA2UIMessage(surfaceId, rootId, components);
-    }
-    @Action(description = "Insert new data in database table")
+    @Action(description = "Insert data into table")
     public Object insertDataInTable(TableData tableData) {
-        if (tableData == null || tableData.getRowDataList() == null ||
-                tableData.getRowDataList().isEmpty() ||
-                tableData.getRowDataList().get(0).getColumnDataList() == null) {
 
-            String result = "No data provided. Please enter the data to insert.";
+        if (tableData == null ||
+                tableData.getTableName() == null ||
+                tableData.getRowDataList() == null ||
+                tableData.getRowDataList().isEmpty()) {
 
             if (isUICallback(getCallback())) {
-                // Return a UI form for data entry
-                return createDataEntryUI(tableData != null ? tableData.getTableName() : "table");
+                return createMessageUI(
+                        "Insert Data",
+                        "Provide row data for table insertion."
+                );
             }
-            return result;
+            return "No data provided.";
         }
 
-        StringBuilder insertSQL = new StringBuilder("INSERT INTO ");
-        insertSQL.append(tableData.getTableName()).append(" (");
+        List<ColumnData> columns =
+                tableData.getRowDataList()
+                        .get(0)
+                        .getColumnDataList();
 
-        List<ColumnData> columns = tableData.getRowDataList().get(0).getColumnDataList();
-        for (ColumnData column : columns) {
-            insertSQL.append(column.getColumnName()).append(", ");
+        StringBuilder sql = new StringBuilder("INSERT INTO ");
+        sql.append(tableData.getTableName()).append(" (");
+
+        for (ColumnData c : columns) {
+            sql.append(c.getColumnName()).append(", ");
         }
 
-        insertSQL.setLength(insertSQL.length() - 2);
-        insertSQL.append(") VALUES (");
+        sql.setLength(sql.length() - 2);
+        sql.append(") VALUES (");
 
         for (int i = 0; i < columns.size(); i++) {
-            insertSQL.append("?, ");
+            sql.append("?, ");
         }
 
-        insertSQL.setLength(insertSQL.length() - 2);
-        insertSQL.append(")");
+        sql.setLength(sql.length() - 2);
+        sql.append(")");
 
-        String result;
         try (Connection conn = DriverManager.getConnection(JDBC_URL);
-                PreparedStatement pstmt = conn.prepareStatement(insertSQL.toString())) {
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             for (RowData row : tableData.getRowDataList()) {
-                int index = 1;
-                for (ColumnData column : row.getColumnDataList()) {
-                    pstmt.setObject(index++, column.getColumnValue());
+                int idx = 1;
+                for (ColumnData c : row.getColumnDataList()) {
+                    ps.setObject(idx++, c.getColumnValue());
                 }
-                pstmt.addBatch();
+                ps.addBatch();
             }
 
-            pstmt.executeBatch();
-            result = "Data inserted successfully into " + tableData.getTableName();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            result = "Error inserting data: " + e.getMessage();
-        }
+            ps.executeBatch();
 
-        if (isUICallback(getCallback())) {
-            return createGenericUI("Data Insertion", result);
+            return uiOrText(
+                    "Data Inserted",
+                    "Rows inserted into table '" + tableData.getTableName() + "'."
+            );
+
+        } catch (SQLException e) {
+            return uiOrText("Insert Error", e.getMessage());
         }
-        return result;
     }
 
-    @Action(description = "Retrieve data from table")
-    public Object retrieveData(String sqlSelectQuery) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    /* =================================================
+       RETRIEVE DATA
+     ================================================= */
+
+    @Action(description = "Retrieve data")
+    public Object retrieveData(String sqlQuery) {
+
+        if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
+            if (isUICallback(getCallback())) {
+                return createSingleInputForm(
+                        "query_form",
+                        "Run Query",
+                        "SQL SELECT query",
+                        "sqlQuery"
+                );
+            }
+            return "SQL query is required.";
+        }
+
+        List<Map<String, Object>> rows =
+                new ArrayList<Map<String, Object>>();
 
         try (Connection conn = DriverManager.getConnection(JDBC_URL);
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sqlSelectQuery)) {
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sqlQuery)) {
 
-            ResultSetMetaData metaData = rs.getMetaData();
-            int columnCount = metaData.getColumnCount();
+            ResultSetMetaData md = rs.getMetaData();
 
             while (rs.next()) {
-                Map<String, Object> row = new HashMap<>();
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnName(i);
-                    Object columnValue = rs.getObject(i);
-                    row.put(columnName, columnValue);
+                Map<String, Object> row =
+                        new LinkedHashMap<String, Object>();
+                for (int i = 1; i <= md.getColumnCount(); i++) {
+                    row.put(md.getColumnName(i), rs.getObject(i));
                 }
-                result.add(row);
-                log.info("Data retrieved successfully.");
+                rows.add(row);
             }
 
             if (isUICallback(getCallback())) {
-                return createDatabaseResultUI(sqlSelectQuery, result);
+                return createResultUI(sqlQuery, rows);
             }
-            return result;
+            return rows;
+
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return uiOrText("Query Error", e.getMessage());
         }
     }
 
-    private Map<String, Object> createGenericUI(String title, String message) {
-        String surfaceId = "database_action";
-        String rootId = "root";
+    /* =================================================
+       UI HELPERS
+     ================================================= */
 
-        List<String> childIds = Arrays.asList("title", "message");
-        List<Map<String, Object>> components = new ArrayList<>();
-
-        components.add(createRootColumn(rootId, childIds));
-        components.add(createTextComponent("title", "🗄️ " + title, "h2"));
-        components.add(createTextComponent("message", message, "body"));
-
-        return buildA2UIMessage(surfaceId, rootId, components);
+    private Object uiOrText(String title, String message) {
+        if (isUICallback(getCallback())) {
+            return createMessageUI(title, message);
+        }
+        return message;
     }
 
-    private Map<String, Object> createDatabaseResultUI(String query, List<Map<String, Object>> result) {
-        String surfaceId = "database_result";
-        String rootId = "root";
+    private Map<String, Object> createMessageUI(
+            String title, String message) {
 
-        List<String> childIds = new ArrayList<>();
-        childIds.add("title");
-        childIds.add("query_text");
-        childIds.add("divider");
+        List<String> children =
+                Arrays.asList("title", "message");
 
-        List<Map<String, Object>> components = new ArrayList<>();
+        List<Map<String, Object>> components =
+                new ArrayList<Map<String, Object>>();
 
-        components.add(createTextComponent("title", "📊 Database Query Results", "h2"));
-        components.add(createTextComponent("query_text", "Query: " + query, "body"));
-        components.add(createTextComponent("divider", "───────────────────────", "body"));
+        components.add(createRootColumn("root", children));
+        components.add(createTextComponent(
+                "title", "🗄️ " + title, "h2"));
+        components.add(createTextComponent(
+                "message", message, "body"));
 
-        if (result.isEmpty()) {
-            childIds.add("no_results");
-            components.add(createTextComponent("no_results", "No results found.", "body"));
-        } else {
-            int count = 0;
-            for (Map<String, Object> row : result) {
-                if (count++ >= 5)
-                    break;
-                String rowId = "row_" + count;
-                childIds.add(rowId);
-                components.add(createTextComponent(rowId, row.toString(), "body"));
-            }
-            if (result.size() > 5) {
-                childIds.add("more_results");
-                components.add(
-                        createTextComponent("more_results", "... and " + (result.size() - 5) + " more rows.", "body"));
-            }
+        return buildA2UIMessage(
+                "message_ui",
+                "root",
+                components
+        );
+    }
+
+    private Map<String, Object> createSingleInputFormNoRoot(
+            String surfaceId,
+            String title,
+            String label,
+            String fieldName) {
+
+        List<String> children =
+                Arrays.asList("title", fieldName);
+
+        List<Map<String, Object>> components =
+                new ArrayList<Map<String, Object>>();
+
+        components.add(createRootColumn("root", children));
+        components.add(createTextComponent(
+                "title", "✍️ " + title, "h2"));
+        components.add(createTextField(fieldName, label));
+
+        return buildA2UIMessage(
+                surfaceId,
+                "root",
+                components
+        );
+    }
+    private Map<String, Object> createSingleInputForm(
+            String surfaceId,
+            String title,
+            String label,
+            String fieldName) {
+
+        Map<String, Object> textField = new HashMap<>();
+        textField.put("id", fieldName);
+
+        Map<String, Object> textFieldComponent = new HashMap<>();
+        Map<String, Object> textFieldProps = new HashMap<>();
+        textFieldProps.put("label", new HashMap<String, Object>() {{
+            put("literalString", label);
+        }});
+        textFieldProps.put("text", new HashMap<String, Object>() {{
+            put("literalString", "");
+        }});
+        textFieldComponent.put("TextField", textFieldProps);
+        textField.put("component", textFieldComponent);
+
+        return buildA2UIMessage(
+                surfaceId,
+                "root",
+                Arrays.asList(
+                        createRootColumn("root", Arrays.asList("title", "field")),
+                        createTextComponent("title", "✍️ " + title, "h2"),
+                        textField
+                )
+        );
+    }
+
+
+    private Map<String, Object> createTextField(
+            String id, String label) {
+
+        Map<String, Object> field =
+                new HashMap<String, Object>();
+
+        field.put("id", id);
+        field.put("component", "TextField");
+        field.put("label", label);
+        field.put("text", "");
+
+        return field;
+    }
+
+    private Map<String, Object> createResultUI(
+            String query,
+            List<Map<String, Object>> rows) {
+
+        List<String> children =
+                new ArrayList<String>();
+
+        List<Map<String, Object>> components =
+                new ArrayList<Map<String, Object>>();
+
+        children.add("title");
+        children.add("query");
+
+        components.add(createTextComponent(
+                "title", "📊 Query Results", "h2"));
+        components.add(createTextComponent(
+                "query", "Query: " + query, "body"));
+
+        int count = 0;
+        for (Map<String, Object> row : rows) {
+            count++;
+            if (count > 5) break;
+
+            String id = "row_" + count;
+            children.add(id);
+            components.add(createTextComponent(
+                    id, row.toString(), "body"));
         }
 
-        components.add(createRootColumn(rootId, childIds));
+        components.add(createRootColumn("root", children));
 
-        return buildA2UIMessage(surfaceId, rootId, components);
-    }
-
-    @Action(description = "Retrieve data and return as embedded file resource")
-    public EmbeddedResource retrieveDataAsFile(String sqlSelectQuery, String fileName) {
-        EmbeddedResource embedded = new EmbeddedResource();
-        BlobResourceContents blobContents = new BlobResourceContents();
-
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile(fileName, ".csv");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try (Connection conn = DriverManager.getConnection(JDBC_URL);
-                Statement stmt = conn.createStatement();
-                ResultSet rs = stmt.executeQuery(sqlSelectQuery);
-                FileWriter writer = new FileWriter(tempFile);
-                CSVWriter csvWriter = new CSVWriter(writer)) {
-
-            ResultSetMetaData metaData = rs.getMetaData();
-            String[] headers = new String[metaData.getColumnCount()];
-            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                headers[i - 1] = metaData.getColumnName(i);
-            }
-            csvWriter.writeNext(headers);
-
-            while (rs.next()) {
-                String[] row = new String[metaData.getColumnCount()];
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    row[i - 1] = rs.getString(i);
-                }
-                csvWriter.writeNext(row);
-            }
-
-            byte[] fileContent = Files.readAllBytes(tempFile.toPath());
-            String base64Content = Base64.getEncoder().encodeToString(fileContent);
-
-            blobContents.setMimeType("text/csv");
-            blobContents.setBlob(base64Content);
-
-            embedded.setResource(blobContents);
-
-            tempFile.delete();
-            return embedded;
-
-        } catch (Exception e) {
-            log.warning("Error creating embedded resource: " + e.getMessage());
-            throw new RuntimeException("Failed to create embedded resource", e);
-        }
-    }
-
-    @Action(description = "Return grocery data as embedded file resource")
-    public EmbeddedResource getGroceryItemsInFile(String fileName) {
-        EmbeddedResource embedded = new EmbeddedResource();
-        TextResourceContents blobContents = new TextResourceContents();
-
-        String mockData = "id,name,value\n" +
-                "1,item1,100\n" +
-                "2,item2,200\n" +
-                "3,item3,300\n";
-
-        blobContents.setMimeType("text/csv");
-        blobContents.setText(mockData);
-
-        embedded.setResource(blobContents);
-
-        return embedded;
-    }
-
-    @Action(description = "Return grocery data as embedded PDF file resource")
-    public EmbeddedResource getGroceryItemsAsPDF(String fileName) {
-        EmbeddedResource embedded = new EmbeddedResource();
-        BlobResourceContents blobContents = new BlobResourceContents();
-
-        String pdfBase64 = "JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog" +
-                "IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv" +
-                "TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K" +
-                "Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg" +
-                "L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+" +
-                "PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u" +
-                "dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq" +
-                "Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU" +
-                "CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIFdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu" +
-                "ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g" +
-                "CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw" +
-                "MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v" +
-                "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G";
-
-        blobContents.setMimeType("application/pdf");
-        blobContents.setBlob(pdfBase64);
-        blobContents.setUri("data:application/pdf;base64," + pdfBase64);
-        embedded.setResource(blobContents);
-
-        return embedded;
+        return buildA2UIMessage(
+                "query_results",
+                "root",
+                components
+        );
     }
 }

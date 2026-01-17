@@ -25,7 +25,7 @@
         <dependency>
             <groupId>io.github.vishalmysore</groupId>
             <artifactId>a2ajava</artifactId>
-            <version>1.0.3</version>
+            <version>1.0.4</version>
         </dependency>
         <dependency>
             <groupId>io.github.vishalmysore</groupId>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>io.github.vishalmysore</groupId>
             <artifactId>tools4ai</artifactId>
-            <version>1.1.8</version>
+            <version>1.1.9</version>
             <exclusions>
                 <!-- Common Swagger/OpenAPI dependencies to exclude -->
                 <exclusion>
