@@ -182,7 +182,8 @@ public class DerbyService implements A2UIAware, ProcessorAware {
        RETRIEVE DATA
      ================================================= */
 
-    @Action(description = "Retrieve data")
+    @Action(description = "Retrieve data" ,prompt = "do not provide insert query make sure the query is safe")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public Object retrieveData(String sqlQuery) {
 
         if (sqlQuery == null || sqlQuery.trim().isEmpty()) {
@@ -196,7 +197,10 @@ public class DerbyService implements A2UIAware, ProcessorAware {
             }
             return "SQL query is required.";
         }
-
+        String normalized = sqlQuery.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.startsWith("select")) {
+            return uiOrText("Query Error", "Only SELECT queries are allowed.");
+        }
         List<Map<String, Object>> rows =
                 new ArrayList<Map<String, Object>>();
 
